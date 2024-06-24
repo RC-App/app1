@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avaliação de Desempenho</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f0f0;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: flex-start; /* align-items: center; */
+        height: 100vh;
+        margin-left: 20px;
+        /*margin: 0; */
+    }
+    h1 {
+        color: #333;
+        margin-bottom: 20px;
+        /* text-align: center; */
+        align-self: center; /* Aplica alinhamento central apenas ao h1 */
+        font-size: 24px;
+    }
+    #login {
+        background-color: #fff;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 240px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+    }
+    input[type="text"], input[type="password"] {
+        width: 100%;
+        padding: 4px;
+        margin-bottom: 2px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+    #password {
+        padding: 8px;
+        margin-bottom: 10px;
+    }
+    #username {
+        padding: 8px;
+        margin-bottom: 10px;
+    } 
+    button {
+        width: 100%;
+        padding: 4px;
+        background-color: #007BFF;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        font-size: 10px;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #0056b3;
+    }
+    #bt_login {
+        padding: 10px;
+        font-size: 16px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      /*border: 1px solid black;*/ border: 1.5px solid #ADD8E6; /* Azul claro */
+      padding: 2px 2px; 
+      text-align: left;
+      max-width: 300px; /* Defina a largura máxima para as células */
+      white-space: normal; /* nowrap; */ /* Impede que o conteúdo da célula quebre em várias linhas */
+      overflow: hidden; /* Oculta qualquer conteúdo que ultrapasse a largura máxima da célula */
+      text-overflow: ellipsis; /* Adiciona reticências (...) para indicar que o conteúdo foi cortado */
+      font-size: 10px; /* Define o tamanho do texto para 12 pixels */
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+
+    /* Estilo zebrado para a tabela */
+    tbody tr:nth-child(odd) {
+        background-color: #f9f9f9;
+    }
+    tbody tr:nth-child(even) {
+        background-color: #e9e9e9;
+    }
+
+    #resultado {
+      overflow-x: auto;
+    }
+
+    .lb-responsavel {
+    display: flex;
+    align-items: center;
+    color: #333;
+    }
+    .env-avaliacao {
+      display: flex;
+      /*justify-content: flex-start; */
+      justify-content: center; /* Centraliza os botões horizontalmente */
+      gap: 30px;  /*Espaçamento entre os botões */
+      padding: 5px; /* Adiciona espaço ao redor dos botões dentro da div */
+    } 
+    
+    .env-avaliacao button {
+      width: 130px; /* Define a largura dos botões */
+      height: 25px; /* Define a altura dos botões */
+      margin-right: 5px; /* Espaço entre os botões */
+      margin-top: 5px; /* Espaço entre o topo do botão e a borda superior da div */
+    }
+  
+</style>
+</head>
+<body>
+    <h1>Avaliação de Desempenho Profissionais - Técnico Operacional</h1>
+    <div id="login" style="display: block">
+        <label for="codavaliacao">Avaliação:</label>
+        <input type="text" id="codavaliacao" name="codavaliacao"><br><br> 
+        <label for="usuarioavaliador">Usuário Avaliador:</label>
+        <input type="text" id="usuarioavaliador" name="usuarioavaliador"><br><br> 
+        
+        <label for="username">Usuário:</label>
+        <input type="text" id="username" name="username"><br><br>
+        <label for="password">Senha:</label>
+        <input type="password" id="password" name="password"><br><br>
+        <button id="bt_login" onclick="login()">Login</button>
+    </div>
+    <div id="responsavel" style="display: none">
+      <div class="lb-responsavel">
+        <label id="lb-resp" style="margin-right: 5px;">Responsável:</label>
+        <label id="nome-resp" style="margin-right: 20px;">RONALDO CAMPOS</label>
+        <label id="lb-data-aval" style="margin-right: 5px;">Data da Avaliação:</label>
+        <label id="data-aval" style="margin-right: 20px;">01/04/2024</label>
+        <label id="lb-usuario" style="margin-right: 5px;">Usuário:</label>
+        <label id="nome-usuario" style="margin-right: 20px;">teste.teste</label>
+      </div>
+    </div>
+    <div id="tabAvaliados" style="display: none"></div>
+
+    <div id="avaliar"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+    <script src="Token.js"></script>
+    <script>
+      let options = null;
+      // Função para fazer a requisição à API
+      function login() {
+        // ocultar div login
+        //var disp = 'none'; //document.getElementById("login");
+        //dispLogin.style.display = 'none';
+        //dispLogin(disp);            
+        // Dados do usuário e senha inseridos pelo usuário
+        const usuario = document.getElementById('username').value;
+        //const senha = document.getElementById('password').value;
+        // Dados criptografados
+        const enToken = obterTokenPorNomeUsuario(usuario, document.getElementById('password').value);
+        //const encryptedContent = 'U2FsdGVkX1+G5//2txMwiPfH8qfdU57utZVY9VbNu5SVky/NWaMVXZX4YxEOWoEb';
+        //const password2 = prompt('Informe código da chave:');
+        // Credenciais de autenticação
+        //const credenciais = `${usuario}:${senha}`;
+        //const token = btoa(credenciais); // Codifica as credenciais para Base64
+
+        //const token = btoa(`${CryptoJS.AES.decrypt(encryptedContent, password2).toString(CryptoJS.enc.Utf8).trim()}`);
+        //const token = btoa(`${CryptoJS.AES.decrypt(encryptedContent, document.getElementById('password').value).toString(CryptoJS.enc.Utf8).trim()}`);
+        const token = btoa(`${CryptoJS.AES.decrypt(enToken, document.getElementById('password').value).toString(CryptoJS.enc.Utf8).trim()}`);
+        // Opções da requisição
+        let options = {
+              method: 'GET',
+              headers: {
+                  'Authorization': `Basic ${token}` // Adiciona o token de autenticação no cabeçalho da requisição
+              }
+        };
+        reqAPI(options);
+      }
+      function dispLogin(disp){
+        var dispLogin = document.getElementById("login");
+        dispLogin.style.display = disp; //'none';
+      }
+      function reqAPI(options) {
+        const bt_login = document.getElementById('bt_login');
+        bt_login.disabled = true;
+        //console.log('Estilo de display atual:', disptabAval);
+        //if (disptabAval === 'block') {
+        //  console.log('Tabela já está visível. Não será criada outra.');
+        //  return;
+        //}
+
+        //const cod_avaliacao = '0006';
+        const cod_avaliacao = document.getElementById('codavaliacao').value;
+        const usuario_avaliador = document.getElementById('usuarioavaliador').value;
+        const url = `http://apprm03:8051/api/framework/v1/consultaSQLServer/RealizaConsulta/ADE.11/0/V/?parameters=CODAVALIACAO1=${cod_avaliacao};CHAPAAVALIADOR1=${usuario_avaliador}`;
+
+        fetch(url, options)
+          //.then(response => response.json())
+          .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            } 
+            //var disp = 'none';
+            dispLogin('none');
+            return response.json();
+          })
+          .then(dados_retorno_Avaliados => {
+                //console.log(dados_retorno_Avaliados);
+                // Arrays adicionais
+                const dadosAvaliados = dados_retorno_Avaliados.map(item => ({
+                  CHAPA_AVALIADO: item.CHAPA_AVALIADO,
+                  NOME_AVALIADO: item.NOME_AVALIADO,
+                  FUNCAO_AVALIADO: item.FUNCAO_AVALIADO,
+                  SITUACAO: item.SITUACAO,
+                  EQUIPE_AVALIADO: item.EQUIPE_AVALIADO,
+                  SALARIO: item.SALARIO,
+                  GRUPO_SALARIAL: item.GRUPO_SALARIAL,
+                  FAIXA_SALARIAL: item.FAIXA_SALARIAL,
+                  ADMISSAO_AVALIADO: item.ADMISSAO_AVALIADO,
+                  CODAVALIACAO: item.CODAVALIACAO,
+                  CODPARTICIPANTE: item.CODPARTICIPANTE,
+                  SIT_AVALIACAO: item.SIT_AVALIACAO
+                                
+                }));
+
+                const dadosResponsavel = dados_retorno_Avaliados.map(item => ({
+                  CHAPA_AVALIADOR: item.CHAPA_AVALIADOR,
+                  NOME_AVALIADOR: item.NOME_AVALIADOR,
+                  DATA_AVALIACAO: item.DATA_AVALIACAO
+                }));
+                //console.log('dadosAvaliados:', dadosAvaliados);
+                //console.log('dadosResponsavel:', dadosResponsavel);
+                
+                tabAvaliados(dadosAvaliados, dadosResponsavel, options);
+               
+          })
+          //.catch(error => console.error('Erro:', error));
+          .catch(error => {
+            console.error('Erro:', error);
+            if (error.message.includes('401')) {
+                alert('Usuário ou senha incorretos. Por favor, tente novamente.');
+                bt_login.disabled = false;
+                //dispLogin.style.display = 'block'; // Mostra novamente a div de login
+            } else {
+                alert('Ocorreu um erro. Por favor, tente novamente mais tarde.');
+                bt_login.disabled = false;
+                //dispLogin.style.display = 'block'; // Mostra novamente a div de login
+            }
+        });
+      }
+      function reqAPI1(options, cod_avaliacao, chapa_avaliado) {
+        const url1 = `http://apprm03:8051/api/framework/v1/consultaSQLServer/RealizaConsulta/ADE.12/0/V/?parameters=CODAVALIACAO1=${cod_avaliacao};CHAPAAVALIADO1=${chapa_avaliado}`;
+        return fetch(url1, options)
+          .then(response => response.json())
+          .catch(error => {
+            console.error('Erro na API 1:', error);
+            throw error;
+          });
+      }
+      function reqAPI2(options, cod_avaliacao, chapa_avaliado) {
+        const url2 = `http://apprm03:8051/api/framework/v1/consultaSQLServer/RealizaConsulta/ADE.13/0/V/?parameters=CODAVALIACAO1=${cod_avaliacao};CHAPAAVALIADO1=${chapa_avaliado}`; 
+        return fetch(url2, options)
+          .then(response => response.json())
+          .catch(error => {
+            console.error('Erro na API 2:', error);
+            throw error;
+          });
+      }
+      function reqAPI3(options, cod_avaliacao, chapa_avaliado) {
+        const url3 = `http://apprm03:8051/api/framework/v1/consultaSQLServer/RealizaConsulta/ADE.14/0/V/?parameters=CODAVALIACAO1=${cod_avaliacao};CHAPAAVALIADO1=${chapa_avaliado}`; 
+        return fetch(url3, options)
+          .then(response => response.json())
+          .catch(error => {
+            console.error('Erro na API 3:', error);
+            throw error;
+          });
+      }
+      function dispResponsavel (disp) {
+        var dispResponsavel = document.getElementById("responsavel");
+        dispResponsavel.style.display = disp;
+      }
+      function disptabAvaliados(disp) {
+        var disptabAvaliados = document.getElementById("tabAvaliados");
+        disptabAvaliados.style.display = disp;
+      } 
+      function tabAvaliados(dadosAvaliados, dadosResponsavel, options) { // Função para criar e exibir a tabela de avaliados
+        var chapa_avaliador = dadosResponsavel[0].CHAPA_AVALIADOR;
+        var nomeusuario = document.getElementById('username').value;
+        document.getElementById('nome-usuario').innerText = nomeusuario;
+        var nomeresp = dadosResponsavel[0].NOME_AVALIADOR;
+        document.getElementById('nome-resp').innerText = ` ${nomeresp}`;
+        var dataaval = dadosResponsavel[0].DATA_AVALIACAO;
+        document.getElementById('data-aval').innerText = ` ${dataaval}`;
+
+        // monstrar div tabAvaliados e responsavel
+        //var dispresponsavel = document.getElementById("responsavel");
+        //dispresponsavel.style.display = 'block';
+
+        dispResponsavel('block'); disptabAvaliados('block');
+        //var disptabAvaliados = document.getElementById("tabAvaliados");
+        //disptabAvaliados.style.display = 'block';
+        // Mapeamento entre as chaves originais e os novos nomes
+        const keyMapping = {
+          CHAPA_AVALIADO: 'Chapa',
+          NOME_AVALIADO: 'Nome',
+          FUNCAO_AVALIADO: 'Função',
+          SITUACAO: 'Situação',
+          EQUIPE_AVALIADO: 'Equipe',
+          SALARIO: 'Salário',
+          GRUPO_SALARIAL: 'Grupo',
+          FAIXA_SALARIAL: 'Step',
+          ADMISSAO_AVALIADO: 'Admissão',
+          CODAVALIACAO: 'Avaliação',
+          CODPARTICIPANTE: 'Participante',
+          SIT_AVALIACAO: 'Sit_Avaliação'
+        };
+
+        const table = document.createElement('table'); // Criar a tabela
+        const headers = Object.keys(dadosAvaliados[0]); // Adicionar cabeçalhos da tabela
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        headers.forEach(header => {
+          const th = document.createElement('th');
+          th.innerText = keyMapping[header] || header; // Usar o novo nome se disponível, senão usar o nome original
+          //th.innerText = header;
+          headerRow.appendChild(th);
+        });
+        // Adicionar cabeçalho para a coluna do botão
+        const thButton = document.createElement('th'); 
+        thButton.innerText = 'Ação';
+        headerRow.appendChild(thButton);
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+        // Adicionar linhas da tabela
+        const tbody = document.createElement('tbody');
+        dadosAvaliados.forEach(rowData => {
+          const tr = document.createElement('tr');
+          headers.forEach(header => {
+            const td = document.createElement('td');
+            td.innerText = rowData[header];
+            tr.appendChild(td);
+          });
+          // Adicionar a coluna do botão
+          const tdButton = document.createElement('td');
+          const button = document.createElement('button');
+          button.innerText = 'Avaliar';
+          button.onclick = () => {
+            const chapa_avaliado = rowData.CHAPA_AVALIADO;
+            const nome_avaliado = rowData.NOME_AVALIADO;
+            const cod_avaliacao = rowData.CODAVALIACAO;
+            const cod_participante = rowData.CODPARTICIPANTE;
+                      
+            dadosAvaliar(options, chapa_avaliador, cod_avaliacao, chapa_avaliado, nome_avaliado, cod_participante);
+          };
+          tdButton.appendChild(button);
+          tr.appendChild(tdButton);
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+
+        document.getElementById('tabAvaliados').appendChild(table);
+      
+      }
+      // Função busca dados avaliar
+      function dadosAvaliar(options, chapa_avaliador, cod_avaliacao, chapa_avaliado, nome_avaliado, cod_participante) {
+        Promise.all([reqAPI1(options, cod_avaliacao, chapa_avaliado), reqAPI2(options, cod_avaliacao, chapa_avaliado), reqAPI3(options, cod_avaliacao, chapa_avaliado)])
+          .then(([dadosAPI1, dadosAPI2, dadosAPI3]) => {
+            //console.log('Dados :', dadosAPI1);
+            //console.log('Dados :', dadosAPI2);
+            //let nota_assid = dadosAPI1[0].NOTA_ASSIDUIDADE;
+            //var nota_adiv = dadosAPI2[0].INFO_ADVERTENCIAS;
+            //console.log('nota:', nota_assid, 'nota:', nota_adiv);
+            var disptabAvaliados = document.getElementById("tabAvaliados");
+            disptabAvaliados.innerHTML = '';  // Limpar o conteúdo da div 'tabAvaliados'
+            avaliar(options, chapa_avaliador, cod_avaliacao, chapa_avaliado, nome_avaliado, cod_participante, dadosAPI1, dadosAPI2, dadosAPI3);
+          })
+          .catch(error => {
+            console.error('Erro ao buscar dados das APIs:', error);
+          });
+      }
+      // Função para avaliação -------------------------------------------------------------------------------------
+      function avaliar(options, chapa_avaliador, cod_avaliacao, chapa_avaliado, nome_avaliado, cod_participante, dadosAPI1, dadosAPI2, dadosAPI3) {
+        var disptabAvaliados = document.getElementById("tabAvaliados"); // ocultar div tabAvaliados
+        disptabAvaliados.style.display = 'none';
+        var dispavaliar = document.getElementById("avaliar");
+        dispavaliar.style.display = 'block';
+        const div_avaliar = document.createElement('div');
+        div_avaliar.innerText = `Chapa: ${chapa_avaliado}, Nome: ${nome_avaliado}`;
+        div_avaliar.style.border = '1px solid black';
+        div_avaliar.style.margin = '10px 0';
+        div_avaliar.style.padding = '10px';
+        
+        // Criar a tabela dentro da div
+        const table = document.createElement('table');
+        table.style.width = '100%';
+        table.style.borderCollapse = 'collapse';
+        const criterios = {
+            'Item 1': '1 - Produtividade', 'Desc 1': 'Realiza seu trabalho de forma completa, precisa e criteriosa. Entrega resultados dentro dos prazos estabelecidos.',
+            'Item 2': '2 - Qualidade/Excelência', 'Desc 2': 'Apresenta trabalhos sem erros e atende aos padrões de qualidade conforme especificações da área.',
+            'Item 3': '3 - Pro - atividade', 'Desc 3': 'ggg',
+            'Item 4': '4 - Assiduidade', 'Desc 4': 'ttt',
+            'Item 5': '5 - Trabalho em Equipe', 'Desc 5': 'ffff',
+            'Item 6': '6 - Comunicação Eficaz', 'Desc 6': 'rrr',
+            'Item 7': '7 - Disciplina', 'Desc 7': 'lll',
+            'Item 8': '8 - Acidentes', 'Desc 8': 'kkkk',
+            'Item 9': '9 - formação Acadêmica e/ou Cursos Obrigatórios', 'Desc 9': 'dddd',
+            'Item 10': '10 - Conhecimentos e Experiência', 'Desc 10': 'ppp'
+        };
+        const conceitos = {
+            'Conc 1': 'SE',
+            'Conc 2': 'AT',
+            'Conc 3': 'AP',
+            'Conc 4': 'NA'
+        };
+
+        for (let i = 1; i <= 10; i++) {
+          if (i === 1) { 
+             const trbloco1 = document.createElement('tr'); 
+             const tdbloco1 = document.createElement('td'), tdbloco11 = document.createElement('td'), tdbloco12 = document.createElement('td'), tdbloco13 = document.createElement('td');
+             const tdbloco14 = document.createElement('td'), tdbloco15 = document.createElement('td'), tdbloco16 = document.createElement('td');
+             tdbloco1.innerText = 'Foco e Excelência nos Resultados'; tdbloco1.style.border = '1px solid black';
+             trbloco1.appendChild(tdbloco1); table.appendChild(trbloco1);
+             //const tdbloco11 = document.createElement('td');
+             tdbloco11.innerText = 'Capacidade para atingir resultados conforme planejamento proposto. Acompanha monitora e revê planos se necessário com padrão de qualidade esperado.'; tdbloco11.style.border = '1px solid black';
+             tdbloco12.innerText = 'SE - Supera'; tdbloco12.style.border = '1px solid black';
+             tdbloco13.innerText = 'AT - Atende'; tdbloco13.style.border = '1px solid black';
+             tdbloco14.innerText = 'AP - Atende Parcialmente'; tdbloco14.style.border = '1px solid black';
+             tdbloco15.innerText = 'NA - Não Atende'; tdbloco15.style.border = '1px solid black';
+             tdbloco16.innerText = '60%'; tdbloco16.style.border = '1px solid black';
+             trbloco1.appendChild(tdbloco11); trbloco1.appendChild(tdbloco12); trbloco1.appendChild(tdbloco13); trbloco1.appendChild(tdbloco14); trbloco1.appendChild(tdbloco15); trbloco1.appendChild(tdbloco16);
+             table.appendChild(trbloco1);
+          }
+          if (i === 5) { 
+             const trbloco2 = document.createElement('tr');
+             const tdbloco2 = document.createElement('td');
+             tdbloco2.innerText = 'Relacionamento Interpessoal';
+             tdbloco2.style.border = '1px solid black';
+             trbloco2.appendChild(tdbloco2);
+             table.appendChild(trbloco2);
+          }
+          if (i === 9) { 
+             const trbloco3 = document.createElement('tr');
+             const tdbloco3 = document.createElement('td');
+             tdbloco3.innerText = 'Conhecimentos e Habilidades para o cargo';
+             tdbloco3.style.border = '1px solid black';
+             trbloco3.appendChild(tdbloco3);
+             table.appendChild(trbloco3);
+          }
+
+          const tr = document.createElement('tr');
+          // adiciona item na tabela
+          const tdItem = document.createElement('td');
+          const chItem = `Item ${i}`;
+          tdItem.innerText = criterios[chItem]; // `Item ${i}`;
+          tdItem.style.border = '1px solid black'; tdItem.style.padding = '2px'; //
+          tdItem.style.width = '120px';
+          tr.appendChild(tdItem);
+          // adiciona descrição na tabela
+          const tdDesc = document.createElement('td');
+          const chDesc = `Desc ${i}`;
+          tdDesc.innerText = criterios[chDesc]; // `Item ${i}`;
+          tdDesc.style.border = '1px solid black';
+          tdDesc.style.padding = '2px'; tdDesc.style.width = '300px'; //
+          tr.appendChild(tdDesc);
+          // adiciona botões de avaliação
+          for (let j = 1; j <= 4; j++) {
+            const tdButton = document.createElement('td');
+            tdButton.style.border = '1px solid black';
+            tdButton.style.padding = '2px'; tdButton.style.width = '50px'; //
+            if (i !== 4 && i !== 7 && i !== 8) {
+              const button = document.createElement('button');
+              const chConc = `Conc ${j}`;
+              button.innerText = conceitos[chConc]; 
+              //button.disabled = true;
+              button.onclick = () => {
+                input.value = conceitos[chConc];
+              };
+            tdButton.appendChild(button);
+            } 
+            tr.appendChild(tdButton);
+          }
+
+          const tdInput = document.createElement('td'); tdInput.style.width = '50px';
+          const input = document.createElement('input');
+          const idInput = `notaItem ${i}`;
+          input.id = idInput;
+          input.type = 'text';
+
+          let valor;
+          if (i === 4) {
+              valor = dadosAPI1[0].NOTA_ASSIDUIDADE;
+          } else if (i === 7) {
+                 valor = dadosAPI2[0].NOTA_ADVERTENCIA;
+          } else if (i === 8) {
+                 valor = dadosAPI3[0].NOTA_ACIDENTE;
+          } else {
+                 valor = '';
+          }
+
+          input.value = valor;
+          input.readOnly = true;
+          tdInput.style.border = '1px solid black';
+          tdInput.style.padding = '2px'; //
+          tdInput.appendChild(input);
+          tr.appendChild(tdInput);
+          table.appendChild(tr);
+        }
+        div_avaliar.appendChild(table);
+        
+        const div_env_avaliacao = document.createElement('div');
+        //div_env_resposta.innerText = `Enviar respostas`;
+        div_env_avaliacao.className = 'env-avaliacao';
+        // Adicionar botão cancelar
+        const btCancelar = document.createElement('button'); btCancelar.innerText = 'Cancelar';
+        btCancelar.onclick = () => {
+            var dispavaliar = document.getElementById("avaliar"); // oculta div avaliar
+            dispavaliar.innerHTML = '';  // Limpar o conteúdo da div 'avaliar'
+            dispavaliar.style.display = 'none';
+            disptabAvaliados.style.display = 'block';
+            reqAPI(options);
+        };
+        // Adicionar botão enviar resposta
+        const btenvAvaliacao = document.createElement('button'); btenvAvaliacao.innerText = 'Enviar Avaliação';
+        btenvAvaliacao.onclick = () => {
+            let notaConceito = [];
+            for (let n = 1; n <= 10; n++) {
+                const idInput = `notaItem ${n}`;
+                const notaItem = document.getElementById(idInput);
+                notaConceito[n-1] = notaItem.value;
+                //console.log('nota: ', notaConceito[n-1]);
+            }   
+            
+            // Verificação se alguma posição do array está vazia
+            for (let v = 0; v < 10; v++) {
+                if (!notaConceito[v]) {
+                    alert("Por favor, preencha todos os conceitos antes de enviar.");
+                    return; // Aborta a execução do código
+                }
+            }
+
+            enviarAvaliacao(options, cod_avaliacao, chapa_avaliado, cod_participante, notaConceito)
+            
+            var dispavaliar = document.getElementById("avaliar"); // oculta div avaliar
+            dispavaliar.innerHTML = '';  // Limpar o conteúdo da div 'avaliar'
+            dispavaliar.style.display = 'none';
+            disptabAvaliados.style.display = 'block';
+            setTimeout(() => {
+                    reqAPI(options);
+            }, 1500); // 1,5 segundos
+            //reqAPI(options);
+        };
+        div_env_avaliacao.appendChild(btCancelar);
+        div_env_avaliacao.appendChild(btenvAvaliacao);
+        div_avaliar.appendChild(div_env_avaliacao);
+        
+        let info_faltas, info_atest, info_advert, info_acid;
+        info_faltas = dadosAPI1[0].INFO_FALTAS; info_atest = dadosAPI1[0].INFO_ATESTADOS;
+        info_advert = dadosAPI2[0].INFO_ADVERTENCIAS; info_acid = dadosAPI3[0].INFO_ACIDENTES;
+        
+        const div_info_avaliado = document.createElement('div'); 
+         div_info_avaliado.innerText = `Informações do Avaliado:\n${info_faltas} ${info_atest}\n${info_advert}\n${info_acid}`; 
+         div_info_avaliado.style.border = '1px solid black'; div_info_avaliado.style.fontSize = '12px';
+        div_avaliar.appendChild(div_info_avaliado);
+
+        document.getElementById('avaliar').appendChild(div_avaliar);
+        
+      }
+      function enviarAvaliacao(options, cod_avaliacao, chapa_avaliado, cod_participante, notaConceito) {
+        const urlenv = `http://apprm03:8051/api/framework/v1/consultaSQLServer/RealizaConsulta/ADE.16/0/V/?parameters=CODAVALIACAO1=${cod_avaliacao};CHAPAAVALIADO1=${chapa_avaliado};CODPARTICIPANTE1=${cod_participante};NOTACONCEITO1=${notaConceito[0]};NOTACONCEITO2=${notaConceito[1]};NOTACONCEITO3=${notaConceito[2]};NOTACONCEITO5=${notaConceito[4]};NOTACONCEITO6=${notaConceito[5]};NOTACONCEITO9=${notaConceito[8]};NOTACONCEITO10=${notaConceito[9]}`
+
+        fetch(urlenv, options)
+          .then(response => response.json())
+          .then(dados_retorno_env => {
+              //console.log('retorno_env:', dados_retorno_env)
+          })
+          .catch(error => console.error('Erro:', error));
+      }
+
+    </script>
+    <footer class="footer">
+      <p>.</p>
+    </footer>
+</body>
+</html>
